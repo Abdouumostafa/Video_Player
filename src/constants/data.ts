@@ -6,10 +6,10 @@ export const baseTopics: Topic[] = [
         week: 'Week 1-4',
         description: 'This is a first section',
         videos: [
-            { id: 'video-1', title: 'Video 1', url: '/videos/video1.mp4', locked: false },
-            { id: 'video-2', title: 'Video 2', url: '/videos/video2.mp4', locked: true },
-            { id: 'video-3', title: 'Video 3', url: '/videos/video3.mp4', locked: true },
-            { id: 'video-4', title: 'Video 4', url: '/videos/video4.mp4', locked: true },
+            { id: 'video-1', title: 'Video 1', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video1.mp4', locked: false },
+            { id: 'video-2', title: 'Video 2', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video2.mp4', locked: true },
+            { id: 'video-3', title: 'Video 3', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video3.mp4', locked: true },
+            { id: 'video-4', title: 'Video 4', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video4.mp4', locked: true },
             {
                 id: 'exam-topic-1',
                 title: 'Week 1-4 Exam',
@@ -56,9 +56,9 @@ export const baseTopics: Topic[] = [
         week: 'Week 5-8',
         description: 'This is a second section',
         videos: [
-            { id: 'video-5', title: 'Video 5', url: '/videos/video5.mp4', locked: true },
-            { id: 'video-6', title: 'Video 6', url: '/videos/video6.mp4', locked: true },
-            { id: 'video-7', title: 'Video 7', url: '/videos/video7.mp4', locked: true },
+            { id: 'video-5', title: 'Video 5', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video5.mp4', locked: true },
+            { id: 'video-6', title: 'Video 6', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video6.mp4', locked: true },
+            { id: 'video-7', title: 'Video 7', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video7.mp4', locked: true },
             {
                 id: 'exam-topic-2',
                 title: 'Week 5-8 Exam',
@@ -93,9 +93,9 @@ export const baseTopics: Topic[] = [
         week: 'Week 9-12',
         description: 'This is a third section',
         videos: [
-            { id: 'video-8', title: 'Video 8', url: '/videos/video8.mp4', locked: true },
-            { id: 'video-9', title: 'Video 9', url: '/videos/video9.mp4', locked: true },
-            { id: 'video-10', title: 'Video 10', url: '/videos/video10.mp4', locked: true },
+            { id: 'video-8', title: 'Video 8', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video8.mp4', locked: true },
+            { id: 'video-9', title: 'Video 9', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video9.mp4', locked: true },
+            { id: 'video-10', title: 'Video 10', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video1.mp4', locked: true },
             {
                 id: 'exam-topic-3',
                 title: 'Week 9-12 Exam',
