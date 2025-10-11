@@ -1,103 +1,375 @@
-import Image from "next/image";
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
+import VideoPlayerWithTracking from '@/components/VideoPlayerWithTracking';
+import CourseMaterialsWithProgress from '@/components/CourseMaterialsWithProgress';
+import CourseTopicsWithProgress from '@/components/CourseTopicsWithProgress';
+import Comments from '@/components/Comments';
+import InteractionButtons from '@/components/InteractionButtons';
+import ExamModal from '@/components/ExamModal';
+import { Topic, VideoProgress } from '@/types/types';
+import { baseTopics } from '@/constants/data';
 
-export default function Home() {
+const VIDEO_PROGRESS = 'course_video_progress';
+const CURRENT_VIDEO_KEY = 'current_video';
+const EXAM_SCORES_KEY = 'exam_scores';
+
+export default function CourseDetailsPage() {
+  const [currentVideoId, setCurrentVideoId] = useState<string>('video-1');
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
+  const [videoProgress, setVideoProgress] = useState<Record<string, VideoProgress>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showExam, setShowExam] = useState(false);
+  const [currentExam, setCurrentExam] = useState<any>(null);
+  const [examScores, setExamScores] = useState<Record<string, number>>({});
+
+  const getAllVideos = () => baseTopics.flatMap((topic) => topic.videos);
+
+  const getTopicsWithLockStatus = (): Topic[] => {
+    const allItems = getAllVideos();
+
+    return baseTopics.map((topic) => ({
+      ...topic,
+      videos: topic.videos.map((video) => {
+        if (video.id === 'video-1') return { ...video, locked: false };
+
+        const currentItemIndex = allItems.findIndex((v) => v.id === video.id);
+        if (currentItemIndex === 0) return { ...video, locked: false };
+
+        const previousItem = allItems[currentItemIndex - 1];
+        const previousProgress = videoProgress[previousItem.id];
+        const isUnlocked = previousProgress?.watched || false;
+
+        return { ...video, locked: !isUnlocked };
+      }),
+    }));
+  };
+
+  const topics = getTopicsWithLockStatus();
+
+  const findLastWatchedVideo = (progress: Record<string, VideoProgress>) => {
+    const allItems = getAllVideos();
+
+    const itemsWithProgress = allItems
+      .filter(item => progress[item.id])
+      .map(item => ({
+        ...item,
+        progress: progress[item.id],
+      }))
+      .sort((a, b) => b.progress.lastWatchedTime - a.progress.lastWatchedTime);
+
+    if (itemsWithProgress.length === 0) {
+      return allItems[0];
+    }
+
+    const lastWatched = itemsWithProgress[0];
+
+    if (lastWatched.progress.watched) {
+      const lastWatchedIndex = allItems.findIndex(v => v.id === lastWatched.id);
+      if (lastWatchedIndex < allItems.length - 1) {
+        const nextItem = allItems[lastWatchedIndex + 1];
+        if (nextItem) return nextItem;
+      }
+    }
+
+    return lastWatched;
+  };
+
+  useEffect(() => {
+    const stored = localStorage.getItem(VIDEO_PROGRESS);
+    const storedScores = localStorage.getItem(EXAM_SCORES_KEY);
+
+
+
+    if (storedScores) {
+      setExamScores(JSON.parse(storedScores));
+    }
+
+    if (stored) {
+      const loadedProgress = JSON.parse(stored);
+      setVideoProgress(loadedProgress);
+
+      const lastItem = findLastWatchedVideo(loadedProgress);
+      setCurrentVideoId(lastItem.id);
+      setCurrentVideoUrl(lastItem.url);
+
+    } else {
+      setCurrentVideoUrl(baseTopics[0].videos[0].url);
+    }
+
+    setIsLoaded(true);
+
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem(CURRENT_VIDEO_KEY, currentVideoId);
+    }
+  }, [currentVideoId, isLoaded]);
+
+  useEffect(() => {
+    if (Object.keys(videoProgress).length > 0) {
+      localStorage.setItem(VIDEO_PROGRESS, JSON.stringify(videoProgress));
+    }
+  }, [videoProgress]);
+
+  const handleProgressUpdate = useCallback((videoId: string, progress: number, watched: boolean) => {
+    setVideoProgress((prev) => ({
+      ...prev,
+      [videoId]: {
+        videoId,
+        progress,
+        watched,
+        lastWatchedTime: Date.now(),
+      },
+    }));
+  }, []);
+
+  const handleVideoEnd = useCallback(() => {
+    setVideoProgress((prev) => ({
+      ...prev,
+      [currentVideoId]: {
+        videoId: currentVideoId,
+        progress: 100,
+        watched: true,
+        lastWatchedTime: Date.now(),
+      },
+    }));
+
+    setTimeout(() => {
+      const allItems = getAllVideos();
+      const currentIndex = allItems.findIndex((v) => v.id === currentVideoId);
+
+      if (currentIndex < allItems.length - 1) {
+        const nextItem = allItems[currentIndex + 1];
+        setCurrentVideoId(nextItem.id);
+        setCurrentVideoUrl(nextItem.url);
+
+        if (nextItem.isExam) {
+          setCurrentExam(nextItem);
+          setShowExam(true);
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        alert('🎉 Congratulations! Course completed!');
+      }
+    }, 1500);
+  }, [currentVideoId]);
+
+  const handleVideoSelect = (videoId: string, videoUrl: string) => {
+    const allItems = topics.flatMap((topic) => topic.videos);
+    const selectedItem = allItems.find((v) => v.id === videoId);
+
+    if (selectedItem?.locked) {
+      alert('⚠️ Please complete the previous items first!');
+      return;
+    }
+
+    setCurrentVideoId(videoId);
+
+    if (selectedItem?.isExam) {
+      setCurrentExam(selectedItem);
+      setShowExam(true);
+    } else {
+      setCurrentVideoUrl(videoUrl);
+    }
+  };
+
+  const handleExamComplete = (score: number) => {
+    if (currentExam) {
+      setVideoProgress(prev => ({
+        ...prev,
+        [currentExam.id]: {
+          videoId: currentExam.id,
+          progress: 100,
+          watched: true,
+          lastWatchedTime: Date.now(),
+        },
+      }));
+
+      const newScores = {
+        ...examScores,
+        [currentExam.id]: score,
+      };
+      setExamScores(newScores);
+      localStorage.setItem(EXAM_SCORES_KEY, JSON.stringify(newScores));
+    }
+  };
+
+  const handleExamClose = () => {
+    setShowExam(false);
+
+    if (currentExam) {
+      const allItems = getAllVideos();
+      const currentIndex = allItems.findIndex((v) => v.id === currentExam.id);
+
+      if (currentIndex < allItems.length - 1) {
+        const nextItem = allItems[currentIndex + 1];
+        setCurrentVideoId(nextItem.id);
+
+        if (nextItem.isExam) {
+          setCurrentVideoUrl('');
+        } else {
+          setCurrentVideoUrl(nextItem.url);
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        alert('🎉 Congratulations! Course completed!');
+      }
+    }
+  };
+
+  const allVideosData = getAllVideos();
+  const watchedCount = allVideosData.filter((v) => videoProgress[v.id]?.watched).length;
+  const overallProgress = Math.round((watchedCount / allVideosData.length) * 100);
+
+  const currentItem = getAllVideos().find(v => v.id === currentVideoId);
+  const getCurrentSection = useCallback(() => {
+    return baseTopics.find(topic =>
+      topic.videos.some(v => v.id === currentVideoId)
+    ) || null;
+  }, [currentVideoId]);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading course...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+          <span>Home</span>
+          <span>›</span>
+          <span>Courses</span>
+          <span>›</span>
+          <span className="text-gray-900">Course Details</span>
+        </nav>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+          Exploring Beautiful Nature
+        </h1>
+
+        <div className="hidden lg:grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {!currentItem?.isExam ? (
+              <VideoPlayerWithTracking
+                key={currentVideoId}
+                videoUrl={currentVideoUrl}
+                videoId={currentVideoId}
+                onProgressUpdate={handleProgressUpdate}
+                onVideoEnd={handleVideoEnd}
+                initialProgress={videoProgress[currentVideoId]?.progress || 0}
+              />
+            ) : (
+              <div className="bg-blue-100 rounded-lg p-12 text-center">
+                <h2 className="text-2xl font-bold text-blue-900 mb-4">
+                  📝 {currentItem.title}
+                </h2>
+                <p className="text-blue-700 mb-6">
+                  Click below to start the exam
+                </p>
+                <button
+                  onClick={() => {
+                    setCurrentExam(currentItem);
+                    setShowExam(true);
+                  }}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+                >
+                  Start Exam
+                </button>
+              </div>
+            )}
+
+            <InteractionButtons
+              currentProgress={overallProgress}
+              currentSection={getCurrentSection()}
+              onExamComplete={handleExamComplete}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <CourseMaterialsWithProgress
+              instructor="Ali Shahin"
+              duration="3 weeks"
+              lessons={allVideosData.length}
+              enrolled={65}
+              language="English"
+              currentProgress={overallProgress}
+            />
+            <Comments />
+          </div>
+
+          <div className="lg:col-span-1">
+            <CourseTopicsWithProgress
+              topics={topics}
+              videoProgress={videoProgress}
+              onVideoSelect={handleVideoSelect}
+              currentVideoId={currentVideoId}
+            />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="lg:hidden space-y-6">
+          {!currentItem?.isExam ? (
+            <VideoPlayerWithTracking
+              key={currentVideoId}
+              videoUrl={currentVideoUrl}
+              videoId={currentVideoId}
+              onProgressUpdate={handleProgressUpdate}
+              onVideoEnd={handleVideoEnd}
+              initialProgress={videoProgress[currentVideoId]?.progress || 0}
+            />
+          ) : (
+            <div className="bg-blue-100 rounded-lg p-8 text-center">
+              <h2 className="text-xl font-bold text-blue-900 mb-3">
+                📝 {currentItem.title}
+              </h2>
+              <p className="text-blue-700 mb-4">
+                Click below to start the exam
+              </p>
+              <button
+                onClick={() => {
+                  setCurrentExam(currentItem);
+                  setShowExam(true);
+                }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold"
+              >
+                Start Exam
+              </button>
+            </div>
+          )}
+          <InteractionButtons
+            currentProgress={overallProgress}
+            currentSection={getCurrentSection()}
+            onExamComplete={handleExamComplete}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          <CourseMaterialsWithProgress
+            instructor="Nature Explorer"
+            duration="3 weeks"
+            lessons={10}
+            enrolled={65}
+            language="English"
+            currentProgress={overallProgress}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          <CourseTopicsWithProgress
+            topics={topics}
+            videoProgress={videoProgress}
+            onVideoSelect={handleVideoSelect}
+            currentVideoId={currentVideoId}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <Comments />
+        </div>
+      </div>
+
+      <ExamModal
+        isOpen={showExam}
+        onClose={handleExamClose}
+        sectionTitle={currentExam?.title || ''}
+        questions={currentExam?.examQuestions || []}
+        onComplete={handleExamComplete}
+      />
     </div>
   );
 }
