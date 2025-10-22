@@ -6,7 +6,7 @@ export const baseTopics: Topic[] = [
         week: 'Week 1-4',
         description: 'This is a first section',
         videos: [
-            { id: 'video-1', title: 'Video 1', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video1.mp4', locked: false },
+            { id: 'video-1', title: 'Video 1', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video10.mp4', locked: false },
             { id: 'video-2', title: 'Video 2', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video2.mp4', locked: true },
             { id: 'video-3', title: 'Video 3', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video3.mp4', locked: true },
             { id: 'video-4', title: 'Video 4', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video4.mp4', locked: true },
@@ -95,7 +95,7 @@ export const baseTopics: Topic[] = [
         videos: [
             { id: 'video-8', title: 'Video 8', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video8.mp4', locked: true },
             { id: 'video-9', title: 'Video 9', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video9.mp4', locked: true },
-            { id: 'video-10', title: 'Video 10', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video1.mp4', locked: true },
+            { id: 'video-10', title: 'Video 10', url: 'https://te6dfigvturxqjqt.public.blob.vercel-storage.com/video10.mp4', locked: true },
             {
                 id: 'exam-topic-3',
                 title: 'Week 9-12 Exam',

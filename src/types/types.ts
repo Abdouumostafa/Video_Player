@@ -105,6 +105,7 @@ export interface VideoPlayerWithTrackingProps {
     onProgressUpdate: (videoId: string, progress: number, watched: boolean, duration?: number) => void;
     onVideoEnd: () => void;
     initialProgress?: number;
+    isPriority?: boolean;
 }
 
 export interface Video {

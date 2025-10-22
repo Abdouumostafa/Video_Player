@@ -19,14 +19,15 @@ export const metadata: Metadata = {
   description: "This site is made for IT learners",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode; }) {
   return (
     <html lang="en">
       <head>
+        {/* Preconnect to video storage */}
+        <link rel="preconnect" href="https://te6dfigvturxqjqt.public.blob.vercel-storage.com" />
+        <link rel="dns-prefetch" href="https://te6dfigvturxqjqt.public.blob.vercel-storage.com" />
+
+        {/* Inline critical CSS */}
         <style dangerouslySetInnerHTML={{
           __html: `
             .container { max-width: 80rem; margin-left: auto; margin-right: auto; }
@@ -37,12 +38,10 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
   );
 }
+

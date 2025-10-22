@@ -267,7 +267,9 @@ export default function CourseDetailsPage() {
                 onProgressUpdate={handleProgressUpdate}
                 onVideoEnd={handleVideoEnd}
                 initialProgress={videoProgress[currentVideoId]?.progress || 0}
+                isPriority={currentVideoId === 'video-1'}
               />
+
             ) : (
               <div className="bg-blue-100 rounded-lg p-12 text-center">
                 <h2 className="text-2xl font-bold text-blue-900 mb-4">

@@ -9,6 +9,7 @@ export default function VideoPlayerWithTracking({
     onProgressUpdate,
     onVideoEnd,
     initialProgress = 0,
+    isPriority = false,
 }: VideoPlayerWithTrackingProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const hasMarkedWatchedRef = useRef(false);
@@ -62,7 +63,7 @@ export default function VideoPlayerWithTracking({
                 controls
                 className="w-full h-full"
                 controlsList="nodownload"
-                preload="metadata"
+                preload={isPriority ? "auto" : "metadata"}
             >
                 Your browser does not support the video tag.
             </video>
