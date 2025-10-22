@@ -12,11 +12,9 @@ export default function VideoPlayerWithTracking({
 }: VideoPlayerWithTrackingProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const hasMarkedWatchedRef = useRef(false);
-    const hasSentDurationRef = useRef(false);
 
     useEffect(() => {
         hasMarkedWatchedRef.current = false;
-        hasSentDurationRef.current = false;
     }, [videoId]);
 
     useEffect(() => {
@@ -28,23 +26,18 @@ export default function VideoPlayerWithTracking({
 
             if (progress >= 80 && !hasMarkedWatchedRef.current) {
                 hasMarkedWatchedRef.current = true;
-                onProgressUpdate(videoId, progress, true, video.duration);
+                onProgressUpdate(videoId, progress, true);
             } else {
-                onProgressUpdate(videoId, progress, hasMarkedWatchedRef.current, video.duration);
+                onProgressUpdate(videoId, progress, hasMarkedWatchedRef.current);
             }
         };
 
         const handleEnded = () => {
-            onProgressUpdate(videoId, 100, true, video.duration);
+            onProgressUpdate(videoId, 100, true);
             onVideoEnd();
         };
 
         const handleLoadedMetadata = () => {
-            if (!hasSentDurationRef.current && video.duration) {
-                hasSentDurationRef.current = true;
-                onProgressUpdate(videoId, 0, false, video.duration);
-            }
-
             if (initialProgress > 0 && initialProgress < 100) {
                 video.currentTime = (initialProgress / 100) * video.duration;
             }
@@ -59,7 +52,7 @@ export default function VideoPlayerWithTracking({
             video.removeEventListener('ended', handleEnded);
             video.removeEventListener('loadedmetadata', handleLoadedMetadata);
         };
-    }, [videoId, videoUrl, onProgressUpdate, onVideoEnd, initialProgress]);
+    }, [videoId, onProgressUpdate, onVideoEnd, initialProgress]);
 
     return (
         <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
@@ -69,6 +62,7 @@ export default function VideoPlayerWithTracking({
                 controls
                 className="w-full h-full"
                 controlsList="nodownload"
+                preload="metadata"
             >
                 Your browser does not support the video tag.
             </video>

@@ -1,0 +1,16 @@
+.videoContainer {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentGrid {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 2fr 1fr;
+  }
+}

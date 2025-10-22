@@ -1,13 +1,15 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import VideoPlayerWithTracking from '@/components/VideoPlayerWithTracking';
 import CourseMaterialsWithProgress from '@/components/CourseMaterialsWithProgress';
 import CourseTopicsWithProgress from '@/components/CourseTopicsWithProgress';
-import Comments from '@/components/Comments';
 import InteractionButtons from '@/components/InteractionButtons';
-import ExamModal from '@/components/ExamModal';
+
+const Comments = lazy(() => import('@/components/Comments'));
+const ExamModal = lazy(() => import('@/components/ExamModal'));
 import { Topic, VideoProgress } from '@/types/types';
 import { baseTopics } from '@/constants/data';
+import styles from './page.module.css';
 
 const VIDEO_PROGRESS = 'course_video_progress';
 const CURRENT_VIDEO_KEY = 'current_video';
@@ -123,6 +125,7 @@ export default function CourseDetailsPage() {
       },
     }));
   }, []);
+
 
   const handleVideoEnd = useCallback(() => {
     setVideoProgress((prev) => ({
@@ -241,7 +244,7 @@ export default function CourseDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 min-h-screen">
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
           <span>Home</span>
           <span>›</span>
@@ -254,8 +257,8 @@ export default function CourseDetailsPage() {
           Exploring Beautiful Nature
         </h1>
 
-        <div className="hidden lg:grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className={`${styles.contentGrid} hidden lg:grid`}>
+          <div className={`${styles.videoContainer} space-y-8`}>
             {!currentItem?.isExam ? (
               <VideoPlayerWithTracking
                 key={currentVideoId}
@@ -290,15 +293,21 @@ export default function CourseDetailsPage() {
               currentSection={getCurrentSection()}
               onExamComplete={handleExamComplete}
             />
-            <CourseMaterialsWithProgress
-              instructor="Ali Shahin"
-              duration="3 weeks"
-              lessons={allVideosData.length}
-              enrolled={65}
-              language="English"
-              currentProgress={overallProgress}
-            />
-            <Comments />
+            <div className="lg:col-span-1">
+              <CourseMaterialsWithProgress
+                instructor="Ali Shahin"
+                duration="3 weeks"
+                lessons={allVideosData.length}
+                enrolled={65}
+                language="English"
+                currentProgress={overallProgress}
+              />
+            </div>
+            <Suspense fallback={
+              <div className="bg-white rounded-lg p-6 h-64 animate-pulse" />
+            }>
+              <Comments />
+            </Suspense>
           </div>
 
           <div className="lg:col-span-1">
@@ -363,13 +372,17 @@ export default function CourseDetailsPage() {
         </div>
       </div>
 
-      <ExamModal
-        isOpen={showExam}
-        onClose={handleExamClose}
-        sectionTitle={currentExam?.title || ''}
-        questions={currentExam?.examQuestions || []}
-        onComplete={handleExamComplete}
-      />
+      <Suspense fallback={null}>
+        {showExam && (
+          <ExamModal
+            isOpen={showExam}
+            onClose={handleExamClose}
+            sectionTitle={currentExam?.title || ''}
+            questions={currentExam?.examQuestions || []}
+            onComplete={handleExamComplete}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
